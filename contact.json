@@ -1,0 +1,53 @@
+{
+  "larabell": {
+
+    "Template": "./index.html",
+
+    "Fields": {
+      "Name":    { "form": "Name",    "required": true        },
+      "Email":   { "form": "Email",   "required": true        },
+      "Subject": { "form": "Subject"                          },
+      "Message": { "form": "Message", "default": "No Message" },
+      "FormURL": { "form": "FormURL"                          },
+
+      "Referer": { "env": "HTTP_REFERER" },
+      "RemHost": { "env": "REMOTE_HOST"  },
+      "Request": { "env": "REQUEST_URI"  }
+    },
+
+    "EmailBody": [
+      "The following message was submitted via the contact form:",
+      "",
+      "Metadata:",
+      "  Name:        $Name",
+      "  Email:       $Email",
+      "  Subject:     $Subject",
+      "  Referer:     $Referer",
+      "  Remote Host: $RemHost",
+      "",
+      "$Message",
+      "",
+      "++++",
+      "Message sent by Contact CGI form ($Request) on or about $Date."
+    ],
+
+    "ReplyBody": [
+      "<h3>Thank you for your message.</h3>",
+      "",
+      "<p> You sent the following information:",
+      "<ul>",
+      "<li>Name:        $Name</li>",
+      "<li>Email:       $Email</li>",
+      "<li>Subject:     $Subject</li>",
+      "<li>FormURL:     $FormURL</li>",
+      "<li>Referer:     $Referer</li>",
+      "<li>Remote Host: $RemHost</li>",
+      "</ul></p>",
+      "",
+      "<p> and the following message:",
+      "<blockquote>$Message</blockquote></p>",
+      "",
+      "<p>Someone should be in touch with you shortly.</p>"
+    ]
+  }
+}
