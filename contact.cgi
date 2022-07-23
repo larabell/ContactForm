@@ -12,7 +12,7 @@
 
 import cgi, cgitb, datetime, getpass, html, json, os, re, smtplib, ssl, string, sys, traceback
 
-Debug = True
+Debug = False
 
 CfgFile = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
