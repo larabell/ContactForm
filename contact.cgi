@@ -1,20 +1,39 @@
 #!/usr/bin/env python3
 #
-# Requires: Python 3.6 or greater and those modules listed in the import command
+# Copyright 2022 Joseph L Larabell
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
-# ToDo:
-#   o Table for incoming fields and required flags
-#   o Configuration from a file
-#     o Form field table
-#   o Secret field to dump environment (must match setting in config file)
-#   o Adjustable data format
+# =====
+#
+# Requires: Python 3.6 or greater and those modules listed in the import command
 #
 
 import cgi, cgitb, datetime, getpass, html, json, os, re, smtplib, ssl, string, sys, traceback
 
+#
+# Set to True in order to have the script emit enhanced error and debug information
+#
 Debug = False
 
+#
+# Set to the basename of the configuration file(s)... default: basename of script
+#
 CfgFile = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+
+###
+### NO user-modifiable settings beyond this point
+###
 
 def printDebugBlock():
 	print('<pre>')
@@ -86,19 +105,7 @@ def getConfiguration():
 
 	return None
 
-def getDataValues(config):
-	formData = cgi.FieldStorage(encoding = 'utf-8')
-
-#      "Name":    { "form": "Name",    "required": true        },
-#      "Email":   { "form": "Email",   "required": true        },
-#      "FormURL": { "form": "FormURL"                          },
-#      "Subject": { "form": "Subject", "default": "No Subject" },
-#      "Message": { "form": "Message", "default": "No Message" },
-#
-#      "Referer": { "env": "HTTP_REFERER" },
-#      "RemHost": { "env": "REMOTE_HOST"  },
-#      "Request": { "env": "REQUEST_URI"  }
-
+def getDataValues(config, formData):
 	values = {'Date': datetime.datetime.now().isoformat(sep = ' ')}
 
 	if 'Fields' in config:
@@ -121,20 +128,6 @@ def getDataValues(config):
 
 	else:
 		sendError('No fields are listed in the configuration file.')
-
-#	values = {
-#		'Date':    datetime.datetime.now().isoformat(sep = ' '),
-#
-#		'Name':    formData.getfirst('Name'),
-#		'Email':   formData.getfirst('Email'),
-#		'FormURL': formData.getfirst('FormURL'),
-#		'Subject': formData.getfirst('Subject', 'No Subject'),
-#		'Message': formData.getfirst('Message', 'No Message'),
-#
-#		'Referer': os.environ['HTTP_REFERER'],
-#		'RemHost': os.environ['REMOTE_HOST'],
-#		'Request': os.environ['REQUEST_URI']
-#	}
 
 	return values
 
@@ -215,19 +208,31 @@ print('Content-type: text/html\n\n')
 
 cgitb.enable(display = Debug)
 
+formData = cgi.FieldStorage(encoding = 'utf-8')
+
 # Read JSON config file
 
 configData = getConfiguration()
 
 # Process form fields
 
-formValues = getDataValues(configData)
+formValues = getDataValues(configData, formData)
+
+# Log the request, if configured
+
+if 'Logfile' in configData:
+	timestamp = datetime.datetime.now().isoformat()
+
+	values = '{' + ', '.join(['"{0}": {1}'.format(key, formData.getlist(key)) for key in formData]) + "}"
+
+	with open(configData['Logfile'], 'a') as log:
+		log.write('{0} {1} {2}\n'.format(timestamp, os.environ.get('REQUEST_URI'), values))
 
 # Send email message
 
 sendMail(configData, formValues)
 
-# Generate HTML page from template
+# Generate HTML response page from template
 
 htmlfile = configData['Template'] if 'Template' in configData else CfgFile + '.html'
 

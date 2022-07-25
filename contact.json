@@ -1,6 +1,8 @@
 {
   "larabell": {
 
+    "Logfile": "./contact.log",
+
     "Template": "./index.html",
 
     "Fields": {
