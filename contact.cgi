@@ -109,8 +109,15 @@ def getConfiguration():
 def getDataValues(config, formData):
 	values = {'Date': datetime.datetime.now().isoformat(sep = ' ')}
 
+	# Use ISO8601 format for timestamp unless configured otherwise
+
+	if 'DateFormat' in config:
+		values['Date'] = datetime.datetime.now().strftime(config['DateFormat'])
+	else:
+		values['Date'] = datetime.datetime.now().isoformat(sep = ' ')
+
 	if 'Fields' in config:
-		fields = config.get('Fields')
+		fields = config['Fields']
 
 		reqFields = [field for field in fields if fields[field].get('form') and fields[field].get('required')]
 
@@ -132,7 +139,16 @@ def getDataValues(config, formData):
 
 	return values
 
-def composeMessage(subject, config, values):
+def composeMessage(config, values):
+
+	sender  = config['SenderName']   if 'SenderName'   in config else 'Contact Form'
+	address = config['SenderEmail']  if 'SenderEmail'  in config else 'contact'
+	subject = config['EmailSubject'] if 'EmailSubject' in config else 'Contact Form Submission'
+
+	headers = '\n'.join([
+		'From: "{0}" <{1}>'.format(sender, address),
+		'Subject: {0}'.format(subject)
+	])
 
 	# Use message body defined in configuration or a generic message body by default
 
@@ -156,7 +172,9 @@ def composeMessage(subject, config, values):
 			'Default message sent by Contact CGI form ($Request) on or about $Date.',
 		]))
 
-	return 'Subject: {0}\n\n'.format(subject) + msg.substitute(values)
+	# Headers are separated from message body by a single blank line
+
+	return '\n'.join([headers, msg.substitute(values)])
 
 def composeReply(config, values):
 
@@ -194,7 +212,7 @@ def sendMail(config, values):
 
 			server.login(config['SenderUsername'], config['SenderPassword'])
 
-			message = composeMessage('Contact Form Submission', config, values)
+			message = composeMessage(config, values)
 
 			server.sendmail(config['SenderEmail'], config['TargetEmail'], message)
 

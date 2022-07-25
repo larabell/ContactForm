@@ -120,4 +120,10 @@ there are two possibilities:
 1. rename the script itself (keeping the `.cgi` extension if that's required
 by your web server configuration).
 
+### Editing optional information
+
+* DateFormat
+* SenderName
+* EmailSubject
+
 12345678901234567890123456789012345678901234567890123456789012345678901234567890
