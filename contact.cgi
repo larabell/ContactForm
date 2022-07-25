@@ -91,12 +91,13 @@ def getConfiguration():
 		for path in ['.', '~']:
 			cfgfile = os.path.expanduser('{0}/{1}.json'.format(path, CfgFile))
 
-			with open(cfgfile, 'r') as cfg:
-				data = json.load(cfg)
+			if os.path.exists(cfgfile):
+				with open(cfgfile, 'r') as cfg:
+					data = json.load(cfg)
 
-				# If 2nd path component is present, look-up the corresponding configuration object
+					# If 2nd path component is present, look-up the corresponding configuration object
 
-				config.update(data[pathinfo[1]] if len(pathinfo) > 1 else data)
+					config.update(data[pathinfo[1]] if len(pathinfo) > 1 else data)
 
 		return config
 
@@ -187,14 +188,18 @@ def composeReply(config, values):
 def sendMail(config, values):
 	context = ssl.create_default_context()
 
-	with smtplib.SMTP(config['SmtpHost'], config['SmtpPort']) as server:
-		server.starttls(context = context)
+	try:
+		with smtplib.SMTP(config['SmtpHost'], config['SmtpPort']) as server:
+			server.starttls(context = context)
 
-		server.login(config['SenderUsername'], config['SenderPassword'])
+			server.login(config['SenderUsername'], config['SenderPassword'])
 
-		message = composeMessage('Contact Form Submission', config, values)
+			message = composeMessage('Contact Form Submission', config, values)
 
-		server.sendmail(config['SenderEmail'], config['TargetEmail'], message)
+			server.sendmail(config['SenderEmail'], config['TargetEmail'], message)
+
+	except Exception as ex:
+		sendError('Cannot send email... check your configuration', ex)
 
 ###
 ### MAIN ROUTINE
