@@ -19,7 +19,7 @@
 # Requires: Python 3.6 or greater and those modules listed in the import command
 #
 
-import cgi, cgitb, datetime, getpass, html, json, os, re, smtplib, ssl, string, sys, traceback
+import cgi, cgitb, datetime, getpass, html, json, os, re, requests, smtplib, ssl, string, sys, traceback
 
 #
 # Set to True in order to have the script emit enhanced error and debug information
@@ -241,6 +241,26 @@ configData = getConfiguration()
 
 formValues = getDataValues(configData, formData)
 
+# Verify the reCAPTCHA, if configured
+
+recaptchaResponse = formData.getfirst('g-recaptcha-response', None)
+
+if recaptchaResponse and 'RecaptchaKey' in configData:
+	url = 'https://www.google.com/recaptcha/api/siteverify'
+
+	obj = {
+		'secret':   configData['RecaptchaKey'],
+		'response': recaptchaResponse,
+		'remoteip': os.environ.get('REMOTE_HOST')
+	}
+
+	response = requests.post(url, data = obj)
+
+	success = 'Passed' if response.json().get('success') else 'Failed'
+
+else:
+	success = 'Skipped' # reCAPTCHA wasn't used
+
 # Log the request, if configured
 
 if 'Logfile' in configData:
@@ -249,11 +269,12 @@ if 'Logfile' in configData:
 	values = '{' + ', '.join(['"{0}": {1}'.format(key, formData.getlist(key)) for key in formData]) + "}"
 
 	with open(configData['Logfile'], 'a') as log:
-		log.write('{0} {1} {2}\n'.format(timestamp, os.environ.get('REQUEST_URI'), values))
+		log.write('{0} [{1}] {2} {3}\n'.format(timestamp, success, os.environ.get('REQUEST_URI'), values))
 
-# Send email message
+# Send email message unless reCAPTCHA failed
 
-sendMail(configData, formValues)
+if success in ['Passed', 'Skipped']:
+	sendMail(configData, formValues)
 
 # Generate HTML response page from template
 

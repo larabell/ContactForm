@@ -6,6 +6,12 @@ title: Contact Joe Larabell
 custom_css: form
 permalink: /contact/
 ---
+<script src="https://www.google.com/recaptcha/api.js"></script>
+<script>
+  function onSubmit(token) {
+    document.getElementById("form-id").submit();
+  }
+</script>
 <form id="form-id" class="form-class" method="post" action="/contact/contact.cgi/larabell">
     <!-- This entire "form" block will be replaced by the script-generated reply -->
 
@@ -52,7 +58,11 @@ permalink: /contact/
     </div>
 
     <div class="form-group">
-        <button type="submit" id="button" class="btn btn-primary btn-lg btn-block">Send</button>
+        <button id="button"
+                class="g-recaptcha btn btn-primary btn-lg btn-block" 
+                data-sitekey="your-reCAPTCHA-site-key" 
+                data-callback='onSubmit' 
+                data-action='submit'>Send</button>
     </div>
 
     <input type="hidden" name="FormURL" value="{{ page.url }}">
